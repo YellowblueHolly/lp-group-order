@@ -500,7 +500,7 @@
           <th style="width:100px">옵션</th>
           <th style="width:60px">백오더</th>
           <th style="width:85px">정가 (£)</th>
-          <th style="width:62px">FIE</th>
+          <th style="width:62px">할인적용</th>
           <th style="width:82px">물품가 (£)</th>
           <th style="width:96px">추가배송 (£)</th>
           <th style="width:34px"></th>
@@ -627,11 +627,8 @@ function buildRowHTML(r, index) {
     </td>
     <td><input type="number" data-id="${r.id}" data-field="price" value="${r.price}" placeholder="0.00" step="0.01" min="0" style="text-align:right"></td>
     <td class="cell-c">
-      <select data-id="${r.id}" data-field="fie">
-        <option value="N"${r.fie==='N'?' selected':''}>N</option>
-        <option value="Y"${r.fie==='Y'?' selected':''}>Y</option>
-      </select>
-      <div class="fie-disc" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--green);min-height:16px"></div>
+      <input type="checkbox" data-id="${r.id}" data-field="fie" ${r.fie==='Y'?'checked':''} style="width:16px;height:16px;cursor:pointer;accent-color:var(--green)">
+      <div class="fie-disc" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green);min-height:14px;margin-top:2px"></div>
     </td>
     <td class="cell-r calc-net"><span class="val-main">£0.00</span></td>
     <td class="cell-r calc-extra"><span class="val-muted">-</span></td>
@@ -675,7 +672,13 @@ function bindRowEvents(tr, id) {
   tr.querySelectorAll('input[type=checkbox]').forEach(el => {
     el.addEventListener('change', () => {
       const r = rows.find(r => r.id === id);
-      if (r) { r[el.dataset.field] = el.checked; recalc(); }
+      if (!r) return;
+      if (el.dataset.field === 'fie') {
+        r.fie = el.checked ? 'Y' : 'N';
+      } else {
+        r[el.dataset.field] = el.checked;
+      }
+      recalc();
     });
   });
   // selects
@@ -704,9 +707,23 @@ function updateCalcCells() {
     // 물품가 셀
     tr.querySelector('.calc-net').innerHTML = `<span class="val-main">£${net.toFixed(2)}</span>`;
 
+    // FIE 체크박스 상태 동기화
+    const fieCheckbox = tr.querySelector('input[data-field="fie"]');
+    if (fieCheckbox) fieCheckbox.checked = r.fie === 'Y';
+
     // FIE 할인 표시
     const fieDisc = tr.querySelector('.fie-disc');
-    if (fieDisc) fieDisc.textContent = r.fie === 'Y' && disc > 0 ? `-£${disc.toFixed(2)}` : '';
+    if (fieDisc) {
+      const discPct = Math.round(dr * 100);
+      if (r.fie === 'Y' && disc > 0) {
+        fieDisc.textContent = `-£${disc.toFixed(2)}`;
+      } else if (r.fie === 'Y' && discPct === 0) {
+        fieDisc.textContent = '할인율 0%';
+        fieDisc.style.color = 'var(--muted)';
+      } else {
+        fieDisc.textContent = '';
+      }
+    }
 
     // 추가배송 셀
     let extraDisplay = '-', extraClass = 'val-muted';

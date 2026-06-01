@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레온폴 공구 플랫폼 — 레사모</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --black: #0d0e10;
+    --white: #f7f6f2;
+    --cream: #f0ede6;
+    --accent: #c8a96e;
+    --accent-dark: #9e7d45;
+    --red: #c0392b;
+    --green: #1e6b45;
+    --border: rgba(13,14,16,0.12);
+    --border-strong: rgba(13,14,16,0.25);
+    --muted: #7a7670;
+    --surface: #ebe8e1;
+    --warn-bg: #fff8ee;
+    --warn-border: #e8c97a;
+    --warn-text: #7a5a10;
+    --info-bg: #eef4ff;
+    --info-border: #9dbcf0;
+    --info-text: #1a3d7a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    color: var(--black);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: var(--black);
+    color: var(--white);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 62px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .site-header .logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: rgba(247,246,242,0.45);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 44px 36px 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .hero-left h1 {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .hero-left h1 em {
+    font-style: normal;
+    color: var(--accent-dark);
+  }
+  .hero-left p {
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .hero-badge {
+    background: var(--black);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 7px 16px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ── SETTINGS STRIP ── */
+  .settings-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border-strong);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .setting-cell {
+    background: var(--white);
+    padding: 16px 20px;
+  }
+  .setting-cell label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .setting-cell .input-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .setting-cell input[type=number] {
+    border: none;
+    outline: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--black);
+    background: transparent;
+    width: 100%;
+    padding: 0;
+  }
+  .setting-cell .unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ── NOTICE & WARN ── */
+  .notice {
+    background: var(--info-bg);
+    border: 1px solid var(--info-border);
+    border-radius: 4px;
+    padding: 14px 18px;
+    font-size: 14px;
+    color: var(--info-text);
+    margin-bottom: 16px;
+    line-height: 1.8;
+  }
+  .notice strong { font-weight: 700; }
+  .warn-banner {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 4px;
+    padding: 12px 18px;
+    font-size: 14px;
+    color: var(--warn-text);
+    margin-bottom: 16px;
+    display: none;
+    font-weight: 500;
+  }
+  .warn-banner.active { display: block; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border-strong); border-radius: 4px; overflow: hidden; font-size: 14px; }
+  thead th {
+    background: var(--black);
+    color: rgba(247,246,242,0.7);
+    padding: 12px 12px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,0.07);
+  }
+  thead th:last-child { border-right: none; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface); }
+  tbody td { padding: 10px 12px; vertical-align: middle; border-right: 1px solid var(--border); }
+  tbody td:last-child { border-right: none; }
+  tbody td input[type=text],
+  tbody td input[type=number] {
+    width: 100%; border: none; outline: none; background: transparent;
+    font-family: 'Noto Sans KR', sans-serif; font-size: 14px;
+    color: var(--black); padding: 0;
+  }
+  tbody td input:focus { border-bottom: 1.5px solid var(--accent); }
+  tbody td select {
+    width: 100%; border: none; outline: none; background: transparent;
+    font-family: 'Noto Sans KR', sans-serif; font-size: 14px;
+    color: var(--black); cursor: pointer; padding: 0;
+  }
+  .row-num { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; text-align: center; width: 32px; }
+  .cell-r { text-align: right; }
+  .cell-c { text-align: center; }
+  .val-main { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 14px; }
+  .val-muted { font-family: 'DM Mono', monospace; color: var(--muted); font-size: 13px; }
+  .val-warn { font-family: 'DM Mono', monospace; color: var(--warn-text); font-size: 13px; font-weight: 500; }
+  .fie-y { color: var(--green); font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+  .backorder-chip {
+    display: inline-block; background: #fdecea; color: var(--red);
+    font-size: 11px; padding: 2px 7px; border-radius: 2px; font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+  .del-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 18px; line-height: 1; padding: 2px 5px; border-radius: 2px;
+    transition: color 0.15s;
+  }
+  .del-btn:hover { color: var(--red); }
+
+  .add-btn {
+    width: 100%; padding: 13px;
+    border: 1.5px dashed var(--border-strong);
+    background: none; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px; color: var(--muted);
+    border-radius: 4px; margin-bottom: 32px;
+    transition: all 0.15s;
+  }
+  .add-btn:hover { background: var(--white); color: var(--black); border-color: var(--accent); }
+
+  /* ── SHIP REF ── */
+  .ship-ref {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+  }
+  .ship-ref-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .ship-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0;
+  }
+  .ship-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 8px 7px 0; font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ship-item:nth-last-child(-n+2) { border-bottom: none; }
+  .ship-item .si-label { color: var(--muted); }
+  .ship-item .si-val { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 13px; }
+  .ship-note {
+    font-size: 12px; color: var(--warn-text); margin-top: 10px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── SUMMARY ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .summary-box {
+    background: var(--white);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .summary-head {
+    background: var(--black);
+    color: rgba(247,246,242,0.6);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 11px 18px;
+  }
+  .summary-body { padding: 4px 18px 14px; }
+  .s-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .s-row:last-child { border-bottom: none; }
+  .s-label { color: var(--muted); }
+  .s-val { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 14px; }
+  .s-total {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; border-top: 2px solid var(--black);
+    font-weight: 700; font-size: 17px;
+  }
+  .s-total .s-val { font-size: 18px; }
+
+  /* ── PER PERSON ── */
+  .per-person-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+  }
+  .person-card {
+    background: var(--white);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    overflow: hidden;
+    animation: fadeUp 0.2s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .person-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .person-name { font-weight: 700; font-size: 16px; }
+  .person-total { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 17px; color: var(--accent-dark); }
+  .person-body { padding: 12px 18px; }
+  .person-item { font-size: 13px; color: var(--muted); padding: 4px 0; display: flex; justify-content: space-between; gap: 8px; }
+  .person-item .pi-name { flex: 1; }
+  .person-item .pi-val { font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .person-foot {
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    background: var(--surface);
+  }
+
+  .disc-btn {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .disc-btn:hover { background: var(--black); color: var(--white); border-color: var(--black); }
+  .disc-btn.active { background: var(--black); color: var(--accent); border-color: var(--black); }
+
+  @media (max-width: 768px) {
+    .container { padding: 24px 16px 60px; }
+    .hero { flex-direction: column; align-items: flex-start; }
+    .settings-strip { grid-template-columns: repeat(2, 1fr); }
+    .summary-grid { grid-template-columns: 1fr; }
+    .site-header { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Leon Paul × 레사모 공구
+  </div>
+  <div class="header-meta">UPS Express Worldwide DDU · Korea</div>
+</header>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <h1>레온폴 <em>공구</em> 플랫폼</h1>
+      <p>참여자 신청 · 배송료 자동 계산 · 개인별 납부금액 산출</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="hero-badge" id="heroBadge">세일 없음</div>
+      <button onclick="exportExcel()" style="background:var(--accent);color:var(--black);border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;padding:8px 18px;border-radius:2px;letter-spacing:0.06em;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='var(--accent-dark)';this.style.color='#fff'" onmouseout="this.style.background='var(--accent)';this.style.color='var(--black)'">↓ XLSX 저장</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="settings-strip">
+    <div class="setting-cell">
+      <label>적용 환율 <span id="rateStatus" style="font-family:'DM Mono',monospace;font-size:9px;margin-left:4px;color:var(--muted)">로딩 중…</span></label>
+      <div class="input-wrap">
+        <input type="number" id="exchangeRate" value="1870" min="1000" max="3000" step="10" oninput="recalc()">
+        <span class="unit">원/£</span>
+      </div>
+    </div>
+    <div class="setting-cell">
+      <label>기본 배송료</label>
+      <div class="input-wrap">
+        <input type="number" id="baseShipping" value="50.01" min="0" step="0.01" oninput="recalc()">
+        <span class="unit">£</span>
+      </div>
+    </div>
+    <div class="setting-cell">
+      <label>할인율</label>
+      <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+        <button class="disc-btn" data-val="0" onclick="setDiscount(0)">없음</button>
+        <button class="disc-btn" data-val="5" onclick="setDiscount(5)">5%</button>
+        <button class="disc-btn" data-val="10" onclick="setDiscount(10)">10%</button>
+        <button class="disc-btn active" data-val="15" onclick="setDiscount(15)">15%</button>
+        <button class="disc-btn" data-val="custom" onclick="setDiscount('custom')">직접</button>
+      </div>
+      <div id="customDiscWrap" style="display:none;margin-top:6px">
+        <div class="input-wrap">
+          <input type="number" id="discountRate" value="15" min="0" max="50" oninput="recalc()" style="font-size:18px">
+          <span class="unit">%</span>
+        </div>
+      </div>
+      <input type="hidden" id="discountRate" value="15">
+    </div>
+    <div class="setting-cell">
+      <label>부가세율</label>
+      <div class="input-wrap">
+        <input type="number" id="vatRate" value="10" min="0" max="30" oninput="recalc()">
+        <span class="unit">%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTICE -->
+  <div class="notice">
+    <strong>배송료 구조</strong> &nbsp;·&nbsp;
+    기본 배송료 £50.01은 전체 품목 수로 N빵 &nbsp;·&nbsp;
+    품목별 추가 배송료는 개인 부담 &nbsp;·&nbsp;
+    장갑(Glove/Grips) <strong>1~2개 무료, 3개째부터 1개당 £3.61 추가</strong>
+  </div>
+
+  <div id="gloveWarn" class="warn-banner">
+    ⚠ 장갑 추가 배송 발생
+  </div>
+
+  <!-- TABLE -->
+  <div class="section-label">참여 신청서</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34px">#</th>
+          <th style="width:100px">닉네임</th>
+          <th style="width:130px">품목</th>
+          <th style="width:200px">제품명 (홈페이지 그대로)</th>
+          <th style="width:100px">옵션</th>
+          <th style="width:60px">백오더</th>
+          <th style="width:85px">정가 (£)</th>
+          <th style="width:62px">FIE</th>
+          <th style="width:82px">물품가 (£)</th>
+          <th style="width:96px">추가배송 (£)</th>
+          <th style="width:34px"></th>
+        </tr>
+      </thead>
+      <tbody id="entriesBody"></tbody>
+    </table>
+  </div>
+  <button class="add-btn" onclick="addRow()">+ 항목 추가</button>
+
+  <!-- SUMMARY -->
+  <div class="section-label">공구 합계</div>
+  <div class="summary-grid">
+    <div class="summary-box">
+      <div class="summary-head">주문 금액</div>
+      <div class="summary-body">
+        <div class="s-row"><span class="s-label">총 물품가 (£)</span><span class="s-val" id="totalGBP">£0.00</span></div>
+        <div class="s-row"><span class="s-label">총 물품가 (₩)</span><span class="s-val" id="totalKRW">₩0</span></div>
+        <div class="s-row"><span class="s-label">기본 배송료 (£)</span><span class="s-val" id="baseShipDisp">£50.01</span></div>
+        <div class="s-row"><span class="s-label">추가 배송료 합계 (£)</span><span class="s-val" id="totalExtraGBP">£0.00</span></div>
+        <div class="s-row"><span class="s-label">총 배송료 (₩)</span><span class="s-val" id="totalShipKRW">₩0</span></div>
+      </div>
+      <div class="s-total"><span>공홈 결제 예상 (£)</span><span class="s-val" id="totalOrderGBP">£0.00</span></div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-head">개인 부담 기준</div>
+      <div class="summary-body">
+        <div class="s-row"><span class="s-label">총 품목 수</span><span class="s-val" id="totalItems">0개</span></div>
+        <div class="s-row"><span class="s-label">1인당 기본배송 (N빵)</span><span class="s-val" id="perPersonBase">₩0</span></div>
+        <div class="s-row"><span class="s-label">물품 + 배송 소계</span><span class="s-val" id="subtotal">₩0</span></div>
+        <div class="s-row"><span class="s-label">총 부가세 예상 (10%)</span><span class="s-val" id="totalVAT">₩0</span></div>
+      </div>
+      <div class="s-total"><span>전체 공구 총금액</span><span class="s-val" id="grandTotalFinal">₩0</span></div>
+    </div>
+  </div>
+
+  <!-- PER PERSON -->
+  <div id="perPersonSection" style="display:none">
+    <div class="section-label">참여자별 납부금액</div>
+    <div class="per-person-grid" id="perPersonCards"></div>
+  </div>
+
+  <!-- SHIP REF -->
+  <div class="section-label" style="margin-top:2rem">배송료 참고표</div>
+  <div class="ship-ref">
+    <div class="ship-grid">
+      <div class="ship-item"><span class="si-label">Bleeches</span><span class="si-val">£5.87</span></div>
+      <div class="ship-item"><span class="si-label">Plastron</span><span class="si-val">£2.20</span></div>
+      <div class="ship-item"><span class="si-label">Jacket</span><span class="si-val">£6.54</span></div>
+      <div class="ship-item"><span class="si-label">Mask</span><span class="si-val">£30.88</span></div>
+      <div class="ship-item"><span class="si-label">Blade SET</span><span class="si-val">£30.54</span></div>
+      <div class="ship-item"><span class="si-label">Glove / Grips</span><span class="si-val">£0 (1~2개) / £3.61 (3개~)</span></div>
+      <div class="ship-item"><span class="si-label">Mask Padding</span><span class="si-val">£2.78</span></div>
+      <div class="ship-item"><span class="si-label">Vertex Bag</span><span class="si-val">£0</span></div>
+    </div>
+    <div class="ship-note">* 장갑은 전체 수량 기준 — 초과분 1개당 £3.61 추가</div>
+  </div>
+
+</div>
+
+<script>
+const SHIP_DATA = [
+  { key:'bleeches',     label:'Bleeches',     extra:5.87,  glove:false },
+  { key:'plastron',     label:'Plastron',     extra:2.20,  glove:false },
+  { key:'jacket',       label:'Jacket',       extra:6.54,  glove:false },
+  { key:'mask',         label:'Mask',         extra:30.88, glove:false },
+  { key:'blade_set',    label:'Blade SET',    extra:30.54, glove:false },
+  { key:'glove_grips',  label:'Glove/Grips',  extra:0,     glove:true  },
+  { key:'mask_padding', label:'Mask Padding', extra:2.78,  glove:false },
+  { key:'vertex_bag',   label:'Vertex Bag',   extra:0,     glove:false },
+  { key:'other',        label:'기타',          extra:5.00,  glove:false },
+];
+const shipMap = {};
+SHIP_DATA.forEach(d => shipMap[d.key] = d);
+
+const GLOVE_FREE = 2;
+const GLOVE_EXTRA = 3.61;
+
+let rows = [], idCounter = 0;
+
+function addRow() {
+  const id = ++idCounter;
+  rows.push({ id, nick:'', cat:'', product:'', opt:'', backorder:false, price:'', fie:'N' });
+  appendRowToTable(rows[rows.length - 1]);
+  recalc();
+}
+
+function removeRow(id) {
+  rows = rows.filter(r => r.id !== id);
+  // 전체 재렌더 (행 삭제는 번호 재정렬 필요)
+  fullRenderTable();
+  recalc();
+}
+
+// 한글 조합 안전 바인딩
+function bindTextInput(el, id, field) {
+  let composing = false;
+  el.addEventListener('compositionstart', () => { composing = true; });
+  el.addEventListener('compositionend', () => {
+    composing = false;
+    const r = rows.find(r => r.id === id);
+    if (r) { r[field] = el.value; recalc(); }
+  });
+  el.addEventListener('input', () => {
+    if (!composing) {
+      const r = rows.find(r => r.id === id);
+      if (r) { r[field] = el.value; recalc(); }
+    }
+  });
+}
+
+function buildRowHTML(r, index) {
+  const catOptions = SHIP_DATA.map(d =>
+    `<option value="${d.key}"${r.cat===d.key?' selected':''}>${d.label}</option>`
+  ).join('');
+  return `<tr data-rowid="${r.id}">
+    <td class="row-num">${index + 1}</td>
+    <td><input type="text" data-id="${r.id}" data-field="nick" value="${r.nick}" placeholder="닉네임"></td>
+    <td><select data-id="${r.id}" data-field="cat"><option value="">— 선택 —</option>${catOptions}</select></td>
+    <td><input type="text" data-id="${r.id}" data-field="product" value="${r.product}" placeholder="홈페이지 제품명 그대로"></td>
+    <td><input type="text" data-id="${r.id}" data-field="opt" value="${r.opt}" placeholder="사이즈/Hand"></td>
+    <td class="cell-c">
+      <input type="checkbox" data-id="${r.id}" data-field="backorder" ${r.backorder?'checked':''}>
+    </td>
+    <td><input type="number" data-id="${r.id}" data-field="price" value="${r.price}" placeholder="0.00" step="0.01" min="0" style="text-align:right"></td>
+    <td class="cell-c">
+      <select data-id="${r.id}" data-field="fie">
+        <option value="N"${r.fie==='N'?' selected':''}>N</option>
+        <option value="Y"${r.fie==='Y'?' selected':''}>Y</option>
+      </select>
+      <div class="fie-disc" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--green);min-height:16px"></div>
+    </td>
+    <td class="cell-r calc-net"><span class="val-main">£0.00</span></td>
+    <td class="cell-r calc-extra"><span class="val-muted">-</span></td>
+    <td class="cell-c"><button class="del-btn" onclick="removeRow(${r.id})">×</button></td>
+  </tr>`;
+}
+
+function appendRowToTable(r) {
+  const tbody = document.getElementById('entriesBody');
+  const idx = rows.length - 1;
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = buildRowHTML(r, idx);
+  const tr = tmp.firstElementChild;
+  tbody.appendChild(tr);
+  bindRowEvents(tr, r.id);
+}
+
+function fullRenderTable() {
+  const tbody = document.getElementById('entriesBody');
+  tbody.innerHTML = rows.map((r, i) => buildRowHTML(r, i)).join('');
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const id = parseInt(tr.dataset.rowid);
+    bindRowEvents(tr, id);
+  });
+}
+
+function bindRowEvents(tr, id) {
+  // 텍스트 inputs (한글 safe)
+  tr.querySelectorAll('input[type=text]').forEach(el => {
+    const field = el.dataset.field;
+    bindTextInput(el, id, field);
+  });
+  // 숫자 input
+  tr.querySelectorAll('input[type=number]').forEach(el => {
+    el.addEventListener('input', () => {
+      const r = rows.find(r => r.id === id);
+      if (r) { r[el.dataset.field] = el.value; recalc(); }
+    });
+  });
+  // checkbox
+  tr.querySelectorAll('input[type=checkbox]').forEach(el => {
+    el.addEventListener('change', () => {
+      const r = rows.find(r => r.id === id);
+      if (r) { r[el.dataset.field] = el.checked; recalc(); }
+    });
+  });
+  // selects
+  tr.querySelectorAll('select').forEach(el => {
+    el.addEventListener('change', () => {
+      const r = rows.find(r => r.id === id);
+      if (r) { r[el.dataset.field] = el.value; recalc(); }
+    });
+  });
+}
+
+// 계산 결과만 DOM에 업데이트 (input 포커스 유지)
+function updateCalcCells() {
+  const dr = getDiscountRate();
+  const totalGloves = rows.filter(r => r.cat === 'glove_grips').length;
+  let gloveIdx = 0;
+
+  rows.forEach(r => {
+    const tr = document.querySelector(`tr[data-rowid="${r.id}"]`);
+    if (!tr) return;
+
+    const price = parseFloat(r.price) || 0;
+    const disc = r.fie === 'Y' ? price * dr : 0;
+    const net = price - disc;
+
+    // 물품가 셀
+    tr.querySelector('.calc-net').innerHTML = `<span class="val-main">£${net.toFixed(2)}</span>`;
+
+    // FIE 할인 표시
+    const fieDisc = tr.querySelector('.fie-disc');
+    if (fieDisc) fieDisc.textContent = r.fie === 'Y' && disc > 0 ? `-£${disc.toFixed(2)}` : '';
+
+    // 추가배송 셀
+    let extraDisplay = '-', extraClass = 'val-muted';
+    if (r.cat) {
+      const sd = shipMap[r.cat];
+      if (sd.glove) {
+        gloveIdx++;
+        if (gloveIdx > GLOVE_FREE) {
+          extraDisplay = `£${GLOVE_EXTRA.toFixed(2)} ⚠`;
+          extraClass = 'val-warn';
+        } else {
+          extraDisplay = `£0 (${gloveIdx}/${totalGloves})`;
+        }
+      } else {
+        extraDisplay = sd.extra > 0 ? `£${sd.extra.toFixed(2)}` : '£0';
+      }
+    }
+    tr.querySelector('.calc-extra').innerHTML = `<span class="${extraClass}">${extraDisplay}</span>`;
+  });
+}
+
+function recalc() {
+  updateCalcCells();
+  const rate = parseFloat(document.getElementById('exchangeRate').value) || 1870;
+  const baseShip = parseFloat(document.getElementById('baseShipping').value) || 50.01;
+  const dr = getDiscountRate();
+  const vatR = parseFloat(document.getElementById('vatRate').value) / 100 || 0.10;
+  // 품목이 입력된 행만 N빵 계산 (빈 행 제외)
+  const filledRows = rows.filter(r => r.cat || r.product || parseFloat(r.price) > 0);
+  const n = filledRows.length || rows.length;
+
+  let totalGoods = 0, totalNonGloveExtra = 0, totalGloves = 0;
+  rows.forEach(r => {
+    const price = parseFloat(r.price) || 0;
+    const disc = r.fie === 'Y' ? price * dr : 0;
+    totalGoods += price - disc;
+    if (r.cat) {
+      const sd = shipMap[r.cat];
+      if (sd.glove) totalGloves++;
+      else totalNonGloveExtra += sd.extra;
+    }
+  });
+
+  const gloveExtra = totalGloves > GLOVE_FREE ? (totalGloves - GLOVE_FREE) * GLOVE_EXTRA : 0;
+  const totalExtra = totalNonGloveExtra + gloveExtra;
+  const totalShipGBP = baseShip + totalExtra;
+  const goodsKRW = Math.round(totalGoods * rate);
+  const shipKRW = Math.round(totalShipGBP * rate);
+  const sub = goodsKRW + shipKRW;
+  const vat = Math.round(sub * vatR);
+  const grand = sub + vat;
+  // 1인당 기본배송: 기본배송료를 품목 수로 나눔 (기본배송은 품목 하나당 비례 부담)
+  const totalItems = rows.length;
+  const perBase = totalItems > 0 ? Math.round((baseShip / totalItems) * rate) : 0;
+
+  document.getElementById('totalGBP').textContent = '£'+totalGoods.toFixed(2);
+  document.getElementById('totalKRW').textContent = '₩'+goodsKRW.toLocaleString();
+  document.getElementById('baseShipDisp').textContent = '£'+baseShip.toFixed(2);
+  document.getElementById('totalExtraGBP').textContent = '£'+totalExtra.toFixed(2)+(gloveExtra>0?` (장갑 +£${gloveExtra.toFixed(2)})`:'');
+  document.getElementById('totalShipKRW').textContent = '₩'+shipKRW.toLocaleString();
+  document.getElementById('totalOrderGBP').textContent = '£'+(totalGoods+totalShipGBP).toFixed(2);
+  document.getElementById('totalItems').textContent = totalItems+'개';
+  document.getElementById('perPersonBase').textContent = totalItems > 0 ? `₩${perBase.toLocaleString()} (품목당)` : '₩0';
+  document.getElementById('subtotal').textContent = '₩'+sub.toLocaleString();
+  document.getElementById('totalVAT').textContent = '₩'+vat.toLocaleString();
+  document.getElementById('grandTotalFinal').textContent = '₩'+grand.toLocaleString();
+
+  const warnEl = document.getElementById('gloveWarn');
+  if (totalGloves >= 3) {
+    warnEl.classList.add('active');
+    warnEl.innerHTML = `⚠ 장갑 총 <strong>${totalGloves}개</strong> — ${GLOVE_FREE}개 초과분 ${totalGloves-GLOVE_FREE}개 × £${GLOVE_EXTRA} = <strong>£${gloveExtra.toFixed(2)}</strong> 추가 배송료 발생`;
+  } else {
+    warnEl.classList.remove('active');
+  }
+
+  renderPerPerson(rate, baseShip, vatR);
+}
+
+function renderPerPerson(rate, baseShip, vatR) {
+  const dr = getDiscountRate();
+  const section = document.getElementById('perPersonSection');
+  const container = document.getElementById('perPersonCards');
+  const totalItems = rows.length;
+  // 닉네임 있는 행만 표시
+  const namedRows = rows.filter(r => r.nick.trim());
+  if (!namedRows.length) { section.style.display='none'; return; }
+  section.style.display = 'block';
+
+  const persons = {};
+  let gloveIdx = 0;
+  rows.forEach(r => {
+    const nick = r.nick.trim() || '(미입력)';
+    if (!r.nick.trim()) return; // 닉네임 없는 행 스킵
+    if (!persons[nick]) persons[nick] = { items:[], goods:0, extra:0, count:0 };
+    const price = parseFloat(r.price)||0;
+    const disc = r.fie==='Y' ? price*dr : 0;
+    const net = price - disc;
+    let extra = 0;
+    if (r.cat) {
+      const sd = shipMap[r.cat];
+      if (sd.glove) { gloveIdx++; extra = gloveIdx > GLOVE_FREE ? GLOVE_EXTRA : 0; }
+      else extra = sd.extra;
+    }
+    persons[nick].items.push({ label: r.product || shipMap[r.cat]?.label || '(품목 미선택)', net, extra });
+    persons[nick].goods += net;
+    persons[nick].extra += extra;
+    persons[nick].count += 1;
+  });
+
+  container.innerHTML = Object.entries(persons).map(([nick, p]) => {
+    // 기본배송: 전체 품목 수 기준 N빵 × 본인 품목 수
+    const myBase = totalItems > 0 ? (baseShip / totalItems) * p.count : 0;
+    const myShipGBP = myBase + p.extra;
+    const goodsKRW = Math.round(p.goods * rate);
+    const shipKRW = Math.round(myShipGBP * rate);
+    const sub = goodsKRW + shipKRW;
+    const vat = Math.round(sub * vatR);
+    const total = sub + vat;
+    const itemsHtml = p.items.map(it =>
+      `<div class="person-item"><span class="pi-name">${it.label}</span><span class="pi-val">£${it.net.toFixed(2)} + 배송£${it.extra.toFixed(2)}</span></div>`
+    ).join('');
+    return `<div class="person-card">
+      <div class="person-head">
+        <span class="person-name">${nick}</span>
+        <span class="person-total">₩${total.toLocaleString()}</span>
+      </div>
+      <div class="person-body">${itemsHtml}</div>
+      <div class="person-foot">물품 ₩${goodsKRW.toLocaleString()} + 배송 ₩${shipKRW.toLocaleString()} + 부가세 ₩${vat.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 실시간 환율 (GBP→KRW) — 네이버 환율 기준에 가까운 open.er-api.com 사용 ──
+async function fetchLiveRate() {
+  const statusEl = document.getElementById('rateStatus');
+  const input = document.getElementById('exchangeRate');
+  // 1차: open.er-api.com (시장 환율 기준, 무료)
+  // 2차: frankfurter.app (ECB 기준, 폴백)
+  const apis = [
+    async () => {
+      const r = await fetch('https://open.er-api.com/v6/latest/GBP');
+      const d = await r.json();
+      if (d.result !== 'success') throw new Error('fail');
+      return { rate: Math.round(d.rates.KRW), date: d.time_last_update_utc };
+    },
+    async () => {
+      const r = await fetch('https://api.frankfurter.app/latest?from=GBP&to=KRW');
+      const d = await r.json();
+      return { rate: Math.round(d.rates.KRW), date: d.date };
+    }
+  ];
+  for (const api of apis) {
+    try {
+      const { rate, date } = await api();
+      input.value = rate;
+      const d = new Date(date);
+      statusEl.textContent = `${d.getMonth()+1}/${d.getDate()} 실시간 ✓`;
+      statusEl.style.color = 'var(--green)';
+      recalc();
+      return;
+    } catch(e) { continue; }
+  }
+  statusEl.textContent = '수동 입력';
+  statusEl.style.color = 'var(--muted)';
+}
+
+// ── 할인율 선택 ──
+let currentDiscount = 15;
+
+function setDiscount(val) {
+  document.querySelectorAll('.disc-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.disc-btn[data-val="${val}"]`).classList.add('active');
+
+  if (val === 'custom') {
+    document.getElementById('customDiscWrap').style.display = 'block';
+    currentDiscount = parseFloat(document.querySelector('#customDiscWrap input').value) || 0;
+  } else {
+    document.getElementById('customDiscWrap').style.display = 'none';
+    currentDiscount = val;
+  }
+
+  // hero badge 업데이트
+  const badge = document.getElementById('heroBadge');
+  if (currentDiscount === 0) badge.textContent = '세일 없음';
+  else badge.textContent = `${currentDiscount}% Sale`;
+
+  recalc();
+}
+
+function getDiscountRate() {
+  if (document.getElementById('customDiscWrap').style.display !== 'none') {
+    return (parseFloat(document.querySelector('#customDiscWrap input').value) || 0) / 100;
+  }
+  return currentDiscount / 100;
+}
+
+// ── 엑셀 export (SheetJS CDN) ──
+function exportExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('XLSX 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+    return;
+  }
+  const rate = parseFloat(document.getElementById('exchangeRate').value) || 1870;
+  const baseShip = parseFloat(document.getElementById('baseShipping').value) || 50.01;
+  const dr = getDiscountRate();
+  const vatR = parseFloat(document.getElementById('vatRate').value) / 100 || 0.10;
+  const totalItems = rows.length;
+
+  // 참여 신청서 시트
+  const headers = ['#','닉네임','품목','제품명','옵션','백오더','정가(£)','할인여부','할인금액(£)','물품가(£)','추가배송(£)','기본배송분담(£)','총배송(£)','물품가(₩)','배송(₩)','소계(₩)','부가세(₩)','최종(₩)'];
+  let gloveIdx = 0;
+  const totalGloves = rows.filter(r => r.cat === 'glove_grips').length;
+
+  const dataRows = rows.map((r, i) => {
+    const price = parseFloat(r.price) || 0;
+    const disc = r.fie === 'Y' ? price * dr : 0;
+    const net = price - disc;
+    let extra = 0;
+    if (r.cat) {
+      const sd = shipMap[r.cat];
+      if (sd.glove) { gloveIdx++; extra = gloveIdx > GLOVE_FREE ? GLOVE_EXTRA : 0; }
+      else extra = sd.extra;
+    }
+    const myBase = totalItems > 0 ? baseShip / totalItems : 0;
+    const myShip = myBase + extra;
+    const goodsKRW = Math.round(net * rate);
+    const shipKRW = Math.round(myShip * rate);
+    const sub = goodsKRW + shipKRW;
+    const vat = Math.round(sub * vatR);
+    return [
+      i+1, r.nick, r.cat ? shipMap[r.cat].label : '', r.product, r.opt,
+      r.backorder ? 'Y' : 'N',
+      price, r.fie, +disc.toFixed(2), +net.toFixed(2),
+      +extra.toFixed(2), +myBase.toFixed(2), +myShip.toFixed(2),
+      goodsKRW, shipKRW, sub, vat, sub + vat
+    ];
+  });
+
+  const ws1 = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+  // 컬럼 너비
+  ws1['!cols'] = [4,10,12,28,10,6,8,6,8,8,8,8,8,10,10,10,10,10].map(w => ({wch:w}));
+
+  // 요약 시트
+  const totalGoods = rows.reduce((s,r) => {
+    const p = parseFloat(r.price)||0; return s + p - (r.fie==='Y'?p*dr:0);
+  }, 0);
+  let totalNGE = 0, tG = 0;
+  rows.forEach(r => { if(r.cat){ const sd=shipMap[r.cat]; if(sd.glove)tG++; else totalNGE+=sd.extra; }});
+  const gloveExtra = tG > GLOVE_FREE ? (tG - GLOVE_FREE) * GLOVE_EXTRA : 0;
+  const totalShip = baseShip + totalNGE + gloveExtra;
+  const goodsKRW = Math.round(totalGoods * rate);
+  const shipKRW = Math.round(totalShip * rate);
+  const sub = goodsKRW + shipKRW;
+  const vat = Math.round(sub * vatR);
+
+  const ws2 = XLSX.utils.aoa_to_sheet([
+    ['항목','파운드(£)','원화(₩)'],
+    ['총 물품가', +totalGoods.toFixed(2), goodsKRW],
+    ['기본 배송료', +baseShip.toFixed(2), Math.round(baseShip*rate)],
+    ['추가 배송료', +(totalNGE+gloveExtra).toFixed(2), Math.round((totalNGE+gloveExtra)*rate)],
+    ['총 배송료', +totalShip.toFixed(2), shipKRW],
+    ['공홈 결제 예상', +(totalGoods+totalShip).toFixed(2), ''],
+    ['','',''],
+    ['물품+배송 소계', '', sub],
+    ['부가세 ('+Math.round(vatR*100)+'%)', '', vat],
+    ['최종 총금액', '', sub+vat],
+    ['','',''],
+    ['적용 환율', rate, '원/£'],
+    ['할인율', Math.round(dr*100)+'%', ''],
+    ['총 품목 수', rows.length, '개'],
+  ]);
+  ws2['!cols'] = [{wch:18},{wch:14},{wch:14}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, '참여신청서');
+  XLSX.utils.book_append_sheet(wb, ws2, '공구요약');
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, `레온폴공구_${dateStr}.xlsx`);
+}
+
+// 초기 행 3개
+addRow(); addRow(); addRow();
+fetchLiveRate();
+
+</script>
+</body>
+</html>

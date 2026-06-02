@@ -495,9 +495,9 @@
           <th style="width:220px">제품명 (홈페이지 그대로)</th>
           <th style="width:110px">옵션</th>
           <th style="width:60px">백오더</th>
-          <th style="width:90px">정가 (£)</th>
+          <th style="width:90px">정가 (£ EX VAT)</th>
           <th style="width:70px">할인적용</th>
-          <th style="width:90px">물품가 (£)</th>
+          <th style="width:90px">물품가 (£ EX VAT)</th>
           <th style="width:34px"></th>
         </tr>
       </thead>
@@ -892,69 +892,59 @@ function exportExcel() {
     return;
   }
   const rate = parseFloat(document.getElementById('exchangeRate').value) || 1870;
-  const baseShip = parseFloat(document.getElementById('baseShipping').value) || 50.01;
   const dr = getDiscountRate();
   const vatR = parseFloat(document.getElementById('vatRate').value) / 100 || 0.10;
+  const actualShip = parseFloat(document.getElementById('actualShipping').value) || 0;
+  const hasShip = actualShip > 0;
   const totalItems = rows.length;
 
-  // 참여 신청서 시트
-  const headers = ['#','닉네임','품목','제품명','옵션','백오더','정가(£)','할인여부','할인금액(£)','물품가(£)','추가배송(£)','기본배송분담(£)','총배송(£)','물품가(₩)','배송(₩)','소계(₩)','부가세(₩)','최종(₩)'];
-  let gloveIdx = 0;
-  const totalGloves = rows.filter(r => r.cat === 'glove_grips').length;
+  // ── 참여 신청서 시트 ──
+  const headers = ['#','닉네임','품목','제품명','옵션','백오더','정가(£ EX VAT)','할인적용','할인금액(£)','물품가(£ EX VAT)','물품가(₩)','배송분담(₩)','소계(₩)','부가세(₩)','최종납부(₩)'];
 
   const dataRows = rows.map((r, i) => {
     const price = parseFloat(r.price) || 0;
     const disc = r.fie === 'Y' ? price * dr : 0;
     const net = price - disc;
-    let extra = 0;
-    if (r.cat) {
-      const sd = shipMap[r.cat];
-      if (sd.glove) { gloveIdx++; extra = gloveIdx > GLOVE_FREE ? GLOVE_EXTRA : 0; }
-      else extra = sd.extra;
-    }
-    const myBase = totalItems > 0 ? baseShip / totalItems : 0;
-    const myShip = myBase + extra;
     const goodsKRW = Math.round(net * rate);
-    const shipKRW = Math.round(myShip * rate);
-    const sub = goodsKRW + shipKRW;
+    const myShipKRW = hasShip && totalItems > 0 ? Math.round((actualShip / totalItems) * rate) : 0;
+    const sub = goodsKRW + myShipKRW;
     const vat = Math.round(sub * vatR);
     return [
       i+1, r.nick, r.cat ? shipMap[r.cat].label : '', r.product, r.opt,
       r.backorder ? 'Y' : 'N',
-      price, r.fie, +disc.toFixed(2), +net.toFixed(2),
-      +extra.toFixed(2), +myBase.toFixed(2), +myShip.toFixed(2),
-      goodsKRW, shipKRW, sub, vat, sub + vat
+      price, r.fie === 'Y' ? 'Y' : 'N',
+      +disc.toFixed(2), +net.toFixed(2),
+      goodsKRW, myShipKRW, sub, vat, sub + vat
     ];
   });
 
   const ws1 = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
-  // 컬럼 너비
-  ws1['!cols'] = [4,10,12,28,10,6,8,6,8,8,8,8,8,10,10,10,10,10].map(w => ({wch:w}));
+  ws1['!cols'] = [4,10,12,28,10,6,12,6,8,12,10,10,10,10,10].map(w => ({wch:w}));
 
-  // 요약 시트
-  const totalGoods = rows.reduce((s,r) => {
-    const p = parseFloat(r.price)||0; return s + p - (r.fie==='Y'?p*dr:0);
-  }, 0);
-  let totalNGE = 0, tG = 0;
-  rows.forEach(r => { if(r.cat){ const sd=shipMap[r.cat]; if(sd.glove)tG++; else totalNGE+=sd.extra; }});
-  const gloveExtra = tG > GLOVE_FREE ? (tG - GLOVE_FREE) * GLOVE_EXTRA : 0;
-  const totalShip = baseShip + totalNGE + gloveExtra;
-  const goodsKRW = Math.round(totalGoods * rate);
-  const shipKRW = Math.round(totalShip * rate);
-  const sub = goodsKRW + shipKRW;
+  // ── 공구 요약 시트 ──
+  let totalGoods = 0, totalDisc = 0;
+  rows.forEach(r => {
+    const p = parseFloat(r.price)||0;
+    const d = r.fie==='Y' ? p*dr : 0;
+    totalGoods += p; totalDisc += d;
+  });
+  const totalNet = totalGoods - totalDisc;
+  const netKRW = Math.round(totalNet * rate);
+  const shipKRW = Math.round(actualShip * rate);
+  const sub = netKRW + shipKRW;
   const vat = Math.round(sub * vatR);
 
   const ws2 = XLSX.utils.aoa_to_sheet([
     ['항목','파운드(£)','원화(₩)'],
-    ['총 물품가', +totalGoods.toFixed(2), goodsKRW],
-    ['기본 배송료', +baseShip.toFixed(2), Math.round(baseShip*rate)],
-    ['추가 배송료', +(totalNGE+gloveExtra).toFixed(2), Math.round((totalNGE+gloveExtra)*rate)],
-    ['총 배송료', +totalShip.toFixed(2), shipKRW],
-    ['공홈 결제 예상', +(totalGoods+totalShip).toFixed(2), ''],
+    ['총 정가 합계', +totalGoods.toFixed(2), Math.round(totalGoods*rate)],
+    ['총 할인 합계', -totalDisc.toFixed(2), -Math.round(totalDisc*rate)],
+    ['할인 후 물품가', +totalNet.toFixed(2), netKRW],
+    ['실제 배송료', hasShip ? +actualShip.toFixed(2) : '미입력', hasShip ? shipKRW : '미입력'],
+    ['공홈 결제 예상', hasShip ? +(totalNet+actualShip).toFixed(2) : '미입력', ''],
     ['','',''],
-    ['물품+배송 소계', '', sub],
-    ['부가세 ('+Math.round(vatR*100)+'%)', '', vat],
-    ['최종 총금액', '', sub+vat],
+    ['물품+배송 소계', '', hasShip ? sub : '미입력'],
+    ['부가세 ('+Math.round(vatR*100)+'%)', '', hasShip ? vat : '미입력'],
+    ['최종 총금액', '', hasShip ? sub+vat : '미입력'],
     ['','',''],
     ['적용 환율', rate, '원/£'],
     ['할인율', Math.round(dr*100)+'%', ''],

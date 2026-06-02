@@ -443,13 +443,6 @@
       </div>
     </div>
     <div class="setting-cell">
-      <label>기본 배송료</label>
-      <div class="input-wrap">
-        <input type="number" id="baseShipping" value="50.01" min="0" step="0.01" oninput="recalc()">
-        <span class="unit">£</span>
-      </div>
-    </div>
-    <div class="setting-cell">
       <label>할인율</label>
       <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
         <button class="disc-btn" data-val="0" onclick="setDiscount(0)">없음</button>
@@ -473,6 +466,13 @@
         <span class="unit">%</span>
       </div>
     </div>
+    <div class="setting-cell" style="background:var(--surface)">
+      <label style="color:var(--accent-dark)">실제 배송료 <span style="font-size:9px;text-transform:none;letter-spacing:0">(공홈 확인 후 입력)</span></label>
+      <div class="input-wrap">
+        <input type="number" id="actualShipping" value="" placeholder="0.00" min="0" step="0.01" oninput="recalc()">
+        <span class="unit">£</span>
+      </div>
+    </div>
   </div>
 
   <!-- NOTICE -->
@@ -481,10 +481,6 @@
     기본 배송료 £50.01은 전체 품목 수로 N빵 &nbsp;·&nbsp;
     품목별 추가 배송료는 개인 부담 &nbsp;·&nbsp;
     장갑(Glove/Grips) <strong>1~2개 무료, 3개째부터 1개당 £3.61 추가</strong>
-  </div>
-
-  <div id="gloveWarn" class="warn-banner">
-    ⚠ 장갑 추가 배송 발생
   </div>
 
   <!-- TABLE -->
@@ -496,13 +492,12 @@
           <th style="width:34px">#</th>
           <th style="width:100px">닉네임</th>
           <th style="width:130px">품목</th>
-          <th style="width:200px">제품명 (홈페이지 그대로)</th>
-          <th style="width:100px">옵션</th>
+          <th style="width:220px">제품명 (홈페이지 그대로)</th>
+          <th style="width:110px">옵션</th>
           <th style="width:60px">백오더</th>
-          <th style="width:85px">정가 (£)</th>
-          <th style="width:62px">할인적용</th>
-          <th style="width:82px">물품가 (£)</th>
-          <th style="width:96px">추가배송 (£)</th>
+          <th style="width:90px">정가 (£)</th>
+          <th style="width:70px">할인적용</th>
+          <th style="width:90px">물품가 (£)</th>
           <th style="width:34px"></th>
         </tr>
       </thead>
@@ -511,6 +506,14 @@
   </div>
   <button class="add-btn" onclick="addRow()">+ 항목 추가</button>
 
+  <!-- NOTICE -->
+  <div class="notice">
+    <strong>입력 순서</strong> &nbsp;·&nbsp;
+    ① 참여자 신청서 작성 &nbsp;·&nbsp;
+    ② 공홈에서 장바구니 담아 실제 배송료 확인 &nbsp;·&nbsp;
+    ③ 우측 상단 <strong>실제 배송료(£)</strong> 입력 → 자동 계산
+  </div>
+
   <!-- SUMMARY -->
   <div class="section-label">공구 합계</div>
   <div class="summary-grid">
@@ -518,18 +521,17 @@
       <div class="summary-head">주문 금액</div>
       <div class="summary-body">
         <div class="s-row"><span class="s-label">총 물품가 (£)</span><span class="s-val" id="totalGBP">£0.00</span></div>
-        <div class="s-row"><span class="s-label">총 물품가 (₩)</span><span class="s-val" id="totalKRW">₩0</span></div>
-        <div class="s-row"><span class="s-label">기본 배송료 (£)</span><span class="s-val" id="baseShipDisp">£50.01</span></div>
-        <div class="s-row"><span class="s-label">추가 배송료 합계 (£)</span><span class="s-val" id="totalExtraGBP">£0.00</span></div>
-        <div class="s-row"><span class="s-label">총 배송료 (₩)</span><span class="s-val" id="totalShipKRW">₩0</span></div>
+        <div class="s-row"><span class="s-label">할인 합계 (£)</span><span class="s-val" id="totalDisc" style="color:var(--green)">-£0.00</span></div>
+        <div class="s-row"><span class="s-label">할인 후 물품가 (£)</span><span class="s-val" id="totalNet">£0.00</span></div>
+        <div class="s-row"><span class="s-label">실제 배송료 (£)</span><span class="s-val" id="actualShipDisp" style="color:var(--muted)">미입력</span></div>
       </div>
-      <div class="s-total"><span>공홈 결제 예상 (£)</span><span class="s-val" id="totalOrderGBP">£0.00</span></div>
+      <div class="s-total"><span>공홈 결제 예상 (£)</span><span class="s-val" id="totalOrderGBP">—</span></div>
     </div>
     <div class="summary-box">
       <div class="summary-head">개인 부담 기준</div>
       <div class="summary-body">
         <div class="s-row"><span class="s-label">총 품목 수</span><span class="s-val" id="totalItems">0개</span></div>
-        <div class="s-row"><span class="s-label">1인당 기본배송 (N빵)</span><span class="s-val" id="perPersonBase">₩0</span></div>
+        <div class="s-row"><span class="s-label">배송료 (₩)</span><span class="s-val" id="totalShipKRW" style="color:var(--muted)">미입력</span></div>
         <div class="s-row"><span class="s-label">물품 + 배송 소계</span><span class="s-val" id="subtotal">₩0</span></div>
         <div class="s-row"><span class="s-label">총 부가세 예상 (10%)</span><span class="s-val" id="totalVAT">₩0</span></div>
       </div>
@@ -631,7 +633,6 @@ function buildRowHTML(r, index) {
       <div class="fie-disc" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green);min-height:14px;margin-top:2px"></div>
     </td>
     <td class="cell-r calc-net"><span class="val-main">£0.00</span></td>
-    <td class="cell-r calc-extra"><span class="val-muted">-</span></td>
     <td class="cell-c"><button class="del-btn" onclick="removeRow(${r.id})">×</button></td>
   </tr>`;
 }
@@ -725,133 +726,97 @@ function updateCalcCells() {
       }
     }
 
-    // 추가배송 셀
-    let extraDisplay = '-', extraClass = 'val-muted';
-    if (r.cat) {
-      const sd = shipMap[r.cat];
-      if (sd.glove) {
-        gloveIdx++;
-        if (gloveIdx > GLOVE_FREE) {
-          extraDisplay = `£${GLOVE_EXTRA.toFixed(2)} ⚠`;
-          extraClass = 'val-warn';
-        } else {
-          extraDisplay = `£0 (${gloveIdx}/${totalGloves})`;
-        }
-      } else {
-        extraDisplay = sd.extra > 0 ? `£${sd.extra.toFixed(2)}` : '£0';
-      }
-    }
-    tr.querySelector('.calc-extra').innerHTML = `<span class="${extraClass}">${extraDisplay}</span>`;
+    // 추가배송 셀 (제거됨 — 실제 배송료 직접 입력 방식으로 변경)
   });
 }
 
 function recalc() {
   updateCalcCells();
   const rate = parseFloat(document.getElementById('exchangeRate').value) || 1870;
-  const baseShip = parseFloat(document.getElementById('baseShipping').value) || 50.01;
   const dr = getDiscountRate();
   const vatR = parseFloat(document.getElementById('vatRate').value) / 100 || 0.10;
-  // 품목이 입력된 행만 N빵 계산 (빈 행 제외)
-  const filledRows = rows.filter(r => r.cat || r.product || parseFloat(r.price) > 0);
-  const n = filledRows.length || rows.length;
+  const actualShip = parseFloat(document.getElementById('actualShipping').value);
+  const hasShip = !isNaN(actualShip) && actualShip >= 0;
+  const totalItems = rows.length;
 
-  let totalGoods = 0, totalNonGloveExtra = 0, totalGloves = 0;
+  let totalGoods = 0, totalDisc = 0;
   rows.forEach(r => {
     const price = parseFloat(r.price) || 0;
     const disc = r.fie === 'Y' ? price * dr : 0;
-    totalGoods += price - disc;
-    if (r.cat) {
-      const sd = shipMap[r.cat];
-      if (sd.glove) totalGloves++;
-      else totalNonGloveExtra += sd.extra;
-    }
+    totalGoods += price;
+    totalDisc += disc;
   });
+  const totalNet = totalGoods - totalDisc;
 
-  const gloveExtra = totalGloves > GLOVE_FREE ? (totalGloves - GLOVE_FREE) * GLOVE_EXTRA : 0;
-  const totalExtra = totalNonGloveExtra + gloveExtra;
-  const totalShipGBP = baseShip + totalExtra;
-  const goodsKRW = Math.round(totalGoods * rate);
-  const shipKRW = Math.round(totalShipGBP * rate);
-  const sub = goodsKRW + shipKRW;
+  const netKRW = Math.round(totalNet * rate);
+  const shipKRW = hasShip ? Math.round(actualShip * rate) : 0;
+  const sub = netKRW + shipKRW;
   const vat = Math.round(sub * vatR);
   const grand = sub + vat;
-  // 1인당 기본배송: 기본배송료를 품목 수로 나눔 (기본배송은 품목 하나당 비례 부담)
-  const totalItems = rows.length;
-  const perBase = totalItems > 0 ? Math.round((baseShip / totalItems) * rate) : 0;
 
   document.getElementById('totalGBP').textContent = '£'+totalGoods.toFixed(2);
-  document.getElementById('totalKRW').textContent = '₩'+goodsKRW.toLocaleString();
-  document.getElementById('baseShipDisp').textContent = '£'+baseShip.toFixed(2);
-  document.getElementById('totalExtraGBP').textContent = '£'+totalExtra.toFixed(2)+(gloveExtra>0?` (장갑 +£${gloveExtra.toFixed(2)})`:'');
-  document.getElementById('totalShipKRW').textContent = '₩'+shipKRW.toLocaleString();
-  document.getElementById('totalOrderGBP').textContent = '£'+(totalGoods+totalShipGBP).toFixed(2);
+  document.getElementById('totalDisc').textContent = '-£'+totalDisc.toFixed(2);
+  document.getElementById('totalNet').textContent = '£'+totalNet.toFixed(2);
+  document.getElementById('actualShipDisp').textContent = hasShip ? '£'+actualShip.toFixed(2) : '미입력';
+  document.getElementById('actualShipDisp').style.color = hasShip ? 'var(--black)' : 'var(--muted)';
+  document.getElementById('totalOrderGBP').textContent = hasShip ? '£'+(totalNet+actualShip).toFixed(2) : '—';
   document.getElementById('totalItems').textContent = totalItems+'개';
-  document.getElementById('perPersonBase').textContent = totalItems > 0 ? `₩${perBase.toLocaleString()} (품목당)` : '₩0';
-  document.getElementById('subtotal').textContent = '₩'+sub.toLocaleString();
+  document.getElementById('totalShipKRW').textContent = hasShip ? '₩'+shipKRW.toLocaleString() : '미입력';
+  document.getElementById('totalShipKRW').style.color = hasShip ? 'var(--black)' : 'var(--muted)';
+  document.getElementById('subtotal').textContent = hasShip ? '₩'+sub.toLocaleString() : '₩'+netKRW.toLocaleString()+' (+배송 미입력)';
   document.getElementById('totalVAT').textContent = '₩'+vat.toLocaleString();
-  document.getElementById('grandTotalFinal').textContent = '₩'+grand.toLocaleString();
+  document.getElementById('grandTotalFinal').textContent = hasShip ? '₩'+grand.toLocaleString() : '배송료 입력 필요';
 
-  const warnEl = document.getElementById('gloveWarn');
-  if (totalGloves >= 3) {
-    warnEl.classList.add('active');
-    warnEl.innerHTML = `⚠ 장갑 총 <strong>${totalGloves}개</strong> — ${GLOVE_FREE}개 초과분 ${totalGloves-GLOVE_FREE}개 × £${GLOVE_EXTRA} = <strong>£${gloveExtra.toFixed(2)}</strong> 추가 배송료 발생`;
-  } else {
-    warnEl.classList.remove('active');
-  }
-
-  renderPerPerson(rate, baseShip, vatR);
+  renderPerPerson(rate, actualShip, hasShip, vatR);
 }
 
-function renderPerPerson(rate, baseShip, vatR) {
+function renderPerPerson(rate, actualShip, hasShip, vatR) {
   const dr = getDiscountRate();
   const section = document.getElementById('perPersonSection');
   const container = document.getElementById('perPersonCards');
   const totalItems = rows.length;
-  // 닉네임 있는 행만 표시
   const namedRows = rows.filter(r => r.nick.trim());
   if (!namedRows.length) { section.style.display='none'; return; }
   section.style.display = 'block';
 
   const persons = {};
-  let gloveIdx = 0;
   rows.forEach(r => {
-    const nick = r.nick.trim() || '(미입력)';
-    if (!r.nick.trim()) return; // 닉네임 없는 행 스킵
-    if (!persons[nick]) persons[nick] = { items:[], goods:0, extra:0, count:0 };
+    const nick = r.nick.trim();
+    if (!nick) return;
+    if (!persons[nick]) persons[nick] = { items:[], goods:0, disc:0, count:0 };
     const price = parseFloat(r.price)||0;
     const disc = r.fie==='Y' ? price*dr : 0;
     const net = price - disc;
-    let extra = 0;
-    if (r.cat) {
-      const sd = shipMap[r.cat];
-      if (sd.glove) { gloveIdx++; extra = gloveIdx > GLOVE_FREE ? GLOVE_EXTRA : 0; }
-      else extra = sd.extra;
-    }
-    persons[nick].items.push({ label: r.product || shipMap[r.cat]?.label || '(품목 미선택)', net, extra });
+    persons[nick].items.push({ label: r.product || shipMap[r.cat]?.label || '(품목 미선택)', price, disc, net });
     persons[nick].goods += net;
-    persons[nick].extra += extra;
+    persons[nick].disc += disc;
     persons[nick].count += 1;
   });
 
   container.innerHTML = Object.entries(persons).map(([nick, p]) => {
-    // 기본배송: 전체 품목 수 기준 N빵 × 본인 품목 수
-    const myBase = totalItems > 0 ? (baseShip / totalItems) * p.count : 0;
-    const myShipGBP = myBase + p.extra;
+    // 배송료 N빵: 실제배송료 ÷ 전체 품목수 × 본인 품목수
+    const myShipGBP = hasShip && totalItems > 0 ? (actualShip / totalItems) * p.count : 0;
     const goodsKRW = Math.round(p.goods * rate);
     const shipKRW = Math.round(myShipGBP * rate);
     const sub = goodsKRW + shipKRW;
     const vat = Math.round(sub * vatR);
     const total = sub + vat;
     const itemsHtml = p.items.map(it =>
-      `<div class="person-item"><span class="pi-name">${it.label}</span><span class="pi-val">£${it.net.toFixed(2)} + 배송£${it.extra.toFixed(2)}</span></div>`
+      `<div class="person-item">
+        <span class="pi-name">${it.label}</span>
+        <span class="pi-val">£${it.net.toFixed(2)}${it.disc>0?' <span style="color:var(--green);font-size:11px">(-£'+it.disc.toFixed(2)+')</span>':''}</span>
+      </div>`
     ).join('');
+    const shipLine = hasShip
+      ? `배송 ₩${shipKRW.toLocaleString()} (N빵)`
+      : `배송 미입력`;
     return `<div class="person-card">
       <div class="person-head">
         <span class="person-name">${nick}</span>
-        <span class="person-total">₩${total.toLocaleString()}</span>
+        <span class="person-total">${hasShip ? '₩'+total.toLocaleString() : '—'}</span>
       </div>
       <div class="person-body">${itemsHtml}</div>
-      <div class="person-foot">물품 ₩${goodsKRW.toLocaleString()} + 배송 ₩${shipKRW.toLocaleString()} + 부가세 ₩${vat.toLocaleString()}</div>
+      <div class="person-foot">물품 ₩${goodsKRW.toLocaleString()} + ${shipLine} + 부가세 ₩${vat.toLocaleString()}</div>
     </div>`;
   }).join('');
 }
